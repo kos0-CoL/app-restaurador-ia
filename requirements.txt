@@ -1,0 +1,25 @@
+annotated-doc==0.0.4
+asgiref==3.11.1
+certifi==2026.6.17
+charset-normalizer==3.4.7
+click==8.4.2
+Django==6.0.6
+python-dotenv==1.1.0
+idna==3.18
+json5==0.15.0
+markdown-it-py==4.2.0
+mdurl==0.1.2
+packaging==26.2
+pathspec==1.1.1
+pillow==12.3.0
+platformdirs==4.10.0
+Pygments==2.20.0
+PyYAML==6.0.3
+readchar==4.2.2
+requests==2.34.2
+rich==15.0.0
+shellingham==1.5.4
+specify-cli @ git+https://github.com/github/spec-kit.git@bba473c223dc298fb76ecf8f87f86d5d2b8ed11c
+sqlparse==0.5.5
+typer==0.26.8
+urllib3==2.7.0

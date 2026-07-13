@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurador IA - Colorea y Restaura tus Fotos</title>
+    <script src="https://cdn.tailwindcss.com" data-headlessui></script>
+    <style>
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 py-6">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold text-white">Restaurador IA</h1>
+            <p class="text-gray-400 mt-2">Colorea y restaura tus fotos viejas con inteligencia artificial</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+
+        {% if estado == 'exito' %}
+        <!-- ============================================ -->
+        <!-- ESTADO: EXITO - Panel Comparativo            -->
+        <!-- ============================================ -->
+        <section class="fade-in">
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold text-green-400 mb-4">Procesamiento completado</h2>
+                <p class="text-gray-300 mb-6">Tu imagen ha sido procesada exitosamente. Compara los resultados:</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Original -->
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">Original</h3>
+                        <img src="{{ imagen_original_url }}" alt="Imagen original"
+                             class="w-full rounded-lg border border-gray-600 shadow-lg">
+                    </div>
+                    <!-- Procesada -->
+                    <div class="text-center">
+                        <h3 class="text-sm font-medium text-green-400 mb-3 uppercase tracking-wide">Procesada</h3>
+                        <img src="{{ imagen_resultado_url }}" alt="Imagen procesada"
+                             class="w-full rounded-lg border border-green-600 shadow-lg">
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 mt-6 justify-center">
+                    <a href="{{ imagen_resultado_url }}" download
+                       class="inline-flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Descargar resultado
+                    </a>
+                    <a href="{% url 'procesador:inicio' %}"
+                       class="inline-flex items-center justify-center px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition">
+                        Nueva imagen
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        {% elif estado == 'procesando' %}
+        <!-- ============================================ -->
+        <!-- ESTADO: PROCESANDO - Spinner                 -->
+        <!-- ============================================ -->
+        <section class="fade-in">
+            <div class="bg-gray-800 rounded-lg p-12 text-center">
+                <div class="spinner inline-block w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full mb-6"></div>
+                <h2 class="text-xl font-semibold text-white mb-2">Procesando tu imagen...</h2>
+                <p class="text-gray-400">
+                    {% if preset == 'ambos' %}
+                    Aplicando restauracion y coloreado. Esto puede tomar hasta 60 segundos.
+                    {% elif preset == 'restaurar' %}
+                    Restaurando tu imagen. Esto puede tomar hasta 60 segundos.
+                    {% else %}
+                    Colorizando tu imagen. Esto puede tomar hasta 60 segundos.
+                    {% endif %}
+                </p>
+                <p class="text-gray-500 text-sm mt-4">No cierres esta pagina mientras se procesa.</p>
+            </div>
+        </section>
+
+        {% elif estado == 'error' %}
+        <!-- ============================================ -->
+        <!-- ESTADO: ERROR                                -->
+        <!-- ============================================ -->
+        <section class="fade-in">
+            <div class="bg-gray-800 rounded-lg p-6 border border-red-600">
+                <h2 class="text-xl font-semibold text-red-400 mb-4">Error en el procesamiento</h2>
+                <p class="text-gray-300 mb-6">{{ error_mensaje }}</p>
+                <div class="flex gap-4">
+                    <a href="{% url 'procesador:inicio' %}"
+                       class="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition">
+                        Intentar de nuevo
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        {% else %}
+        <!-- ============================================ -->
+        <!-- ESTADO: VACIO / INICIAL - Formulario         -->
+        <!-- ============================================ -->
+        <section class="fade-in">
+            <form method="post" action="{% url 'procesador:procesar' %}" enctype="multipart/form-data" id="upload-form">
+                {% csrf_token %}
+
+                <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">Sube tu imagen</h2>
+
+                    <!-- Campo de imagen -->
+                    <div class="mb-6">
+                        <label for="id_imagen" class="block text-sm font-medium text-gray-300 mb-2">
+                            Selecciona una imagen (JPEG o PNG, max 10 MB)
+                        </label>
+                        <input type="file"
+                               name="imagen"
+                               id="id_imagen"
+                               accept="image/jpeg,image/png"
+                               required
+                               class="block w-full text-sm text-gray-300 file:mr-4 file:py-3 file:px-4
+                                      file:rounded-lg file:border-0 file:text-sm file:font-semibold
+                                      file:bg-green-600 file:text-white hover:file:bg-green-700
+                                      cursor-pointer bg-gray-700 rounded-lg border border-gray-600">
+                        {% if form.imagen.errors %}
+                        <p class="text-red-400 text-sm mt-2">{{ form.imagen.errors.0 }}</p>
+                        {% endif %}
+                        <!-- Preview de imagen -->
+                        <div id="image-preview" class="mt-4 hidden">
+                            <img id="preview-img" class="max-h-64 rounded-lg border border-gray-600 mx-auto">
+                        </div>
+                    </div>
+
+                    <!-- Selector de preset -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-300 mb-3">
+                            Tipo de mejora
+                        </label>
+                        <div class="space-y-3">
+                            <label class="flex items-center p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-650 border border-gray-600 transition">
+                                <input type="radio" name="preset" value="colorear" checked
+                                       class="w-4 h-4 text-green-500 bg-gray-600 border-gray-500 focus:ring-green-500">
+                                <span class="ml-3">
+                                    <span class="text-white font-medium">Colorear</span>
+                                    <span class="block text-gray-400 text-sm">Agrega color a fotos en blanco y negro</span>
+                                </span>
+                            </label>
+                            <label class="flex items-center p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-650 border border-gray-600 transition">
+                                <input type="radio" name="preset" value="restaurar"
+                                       class="w-4 h-4 text-green-500 bg-gray-600 border-gray-500 focus:ring-green-500">
+                                <span class="ml-3">
+                                    <span class="text-white font-medium">Restaurar</span>
+                                    <span class="block text-gray-400 text-sm">Mejora nitidez y elimina deterioro</span>
+                                </span>
+                            </label>
+                            <label class="flex items-center p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-gray-650 border border-gray-600 transition">
+                                <input type="radio" name="preset" value="ambos"
+                                       class="w-4 h-4 text-green-500 bg-gray-600 border-gray-500 focus:ring-green-500">
+                                <span class="ml-3">
+                                    <span class="text-white font-medium">Ambos</span>
+                                    <span class="block text-gray-400 text-sm">Restaurar + colorear en una sola pasada</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {% if form.preset.errors %}
+                    <p class="text-red-400 text-sm mb-4">{{ form.preset.errors.0 }}</p>
+                    {% endif %}
+
+                    <!-- Boton submit -->
+                    <button type="submit"
+                            class="w-full py-3 px-6 bg-green-600 hover:bg-green-700 text-white font-semibold
+                                   rounded-lg transition text-lg">
+                        Procesar imagen
+                    </button>
+                </div>
+            </form>
+        </section>
+        {% endif %}
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 border-t border-gray-700 py-4 mt-12">
+        <div class="max-w-4xl mx-auto px-4 text-center text-gray-500 text-sm">
+            Restaurador IA &mdash; Powered by Hugging Face AI
+        </div>
+    </footer>
+
+    <!-- Image preview script -->
+    <script>
+        const fileInput = document.getElementById('id_imagen');
+        const preview = document.getElementById('image-preview');
+        const previewImg = document.getElementById('preview-img');
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        previewImg.src = ev.target.result;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Show spinner on form submit
+        const form = document.getElementById('upload-form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                // Brief delay to allow form submission before potential redirect
+            });
+        }
+    </script>
+
+</body>
+</html>
