@@ -26,10 +26,12 @@
 
 ## Demo
 
+### Antes y Despues
+
 <p align="center">
-  <img src="docs/screenshot-form.png" alt="Formulario de subida" width="45%">
+  <img src="docs/28756141_20260706_040321.jpg" alt="Resultado procesado" width="45%">
   &nbsp;&nbsp;
-  <img src="docs/screenshot-resultado.png" alt="Panel comparativo Antes/Despues" width="45%">
+  <img src="docs/screenshot-resultado.jpg" alt="Panel comparativo" width="45%">
 </p>
 
 > Sube una foto vieja, elige el tipo de mejora y obtiene el resultado en segundos.
